@@ -1,0 +1,18 @@
+# Environments
+.env
+.env.*
+
+# IDE
+.vscode/
+.idea/
+.DS_Store
+
+# Backend
+backend/database/
+backend/cache/
+backend/main
+backend/*.exe
+
+# Frontend (if built at root or node_modules at root)
+node_modules/
+dist/
