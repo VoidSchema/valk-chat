@@ -3,15 +3,15 @@ services:
     image: postgres:15-alpine
     restart: always
     environment:
-      POSTGRES_USER: valk
-      POSTGRES_PASSWORD: valkpass
-      POSTGRES_DB: valkchat
+      POSTGRES_USER: ${POSTGRES_USER:-valk}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-valkpass}
+      POSTGRES_DB: ${POSTGRES_DB:-valkchat}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U valk -d valkchat" ]
+      test: [ "CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-valk} -d $${POSTGRES_DB:-valkchat}" ]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -36,9 +36,9 @@ services:
     restart: always
     environment:
       DB_HOST: db
-      DB_USER: valk
-      DB_PASSWORD: valkpass
-      DB_NAME: valkchat
+      DB_USER: ${POSTGRES_USER:-valk}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-valkpass}
+      DB_NAME: ${POSTGRES_DB:-valkchat}
       DB_PORT: "5432"
       REDIS_HOST: redis
       REDIS_PORT: "6379"

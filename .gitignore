@@ -1,6 +1,9 @@
 # Environments
 .env
-.env.*
+.env.local
+.env.development
+.env.test
+.env.production
 
 # IDE
 .vscode/
@@ -8,8 +11,6 @@
 .DS_Store
 
 # Backend
-backend/database/
-backend/cache/
 backend/main
 backend/*.exe
 
