@@ -18,8 +18,12 @@ func InitDB() {
 	password := os.Getenv("DB_PASSWORD")
 	dbname := os.Getenv("DB_NAME")
 	port := os.Getenv("DB_PORT")
+	sslmode := os.Getenv("DB_SSLMODE")
+	if sslmode == "" {
+		sslmode = "disable"
+	}
 
-	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=Asia/Jakarta", host, user, password, dbname, port)
+	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=%s TimeZone=Asia/Jakarta", host, user, password, dbname, port, sslmode)
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 
 	if err != nil {
