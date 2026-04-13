@@ -37,11 +37,15 @@ function formatTime(dateStr: string): string {
 }
 
 function getWsUrl(): string {
+  const wsUrl = import.meta.env.VITE_WS_URL
+  if (wsUrl) return wsUrl
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
   return `${protocol}//${window.location.host}/ws`
 }
 
 function getApiUrl(path: string): string {
+  const apiUrl = import.meta.env.VITE_API_URL
+  if (apiUrl) return `${apiUrl}/${path}`
   return `/api/${path}`
 }
 

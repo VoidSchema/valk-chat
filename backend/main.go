@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"strings"
 	"time"
 	"valk-chat-backend/cache"
 	"valk-chat-backend/cleanup"
@@ -40,8 +41,14 @@ func main() {
 	r := gin.Default()
 
 	// CORS
+	allowedOrigins := os.Getenv("ALLOWED_ORIGINS")
+	originsList := []string{"http://localhost:3000", "http://localhost:5173"}
+	if allowedOrigins != "" {
+		originsList = append(originsList, strings.Split(allowedOrigins, ",")...)
+	}
+
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:3000", "http://localhost:5173"},
+		AllowOrigins:     originsList,
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length"},
