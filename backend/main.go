@@ -174,6 +174,23 @@ func main() {
 		})
 	})
 
+	// Search users for mentions
+	r.GET("/users/search", middleware.AuthRequired(), func(c *gin.Context) {
+		query := c.Query("q")
+		
+		var users []models.User
+		if err := database.DB.Where("username LIKE ?", query+"%").Limit(5).Find(&users).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		
+		var usernames []string
+		for _, u := range users {
+			usernames = append(usernames, u.Username)
+		}
+		c.JSON(http.StatusOK, usernames)
+	})
+
 	// Get messages (authenticated)
 	r.GET("/messages", middleware.AuthRequired(), func(c *gin.Context) {
 		var messages []models.Message

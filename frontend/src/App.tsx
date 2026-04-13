@@ -62,6 +62,12 @@ function App() {
   const [authConfirm, setAuthConfirm] = useState('')
   const [authLoading, setAuthLoading] = useState(false)
 
+  // Mention states
+  const [mentionResults, setMentionResults] = useState<string[]>([])
+  const [mentionIndex, setMentionIndex] = useState(0)
+  const [isMentioning, setIsMentioning] = useState(false)
+  const [mentionCursorPos, setMentionCursorPos] = useState(0)
+
   const wsRef = useRef<WebSocket | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
@@ -123,6 +129,14 @@ function App() {
       if (payload.type === 'message' && payload.data) {
         setMessages(prev => [...prev, payload.data])
         setChatRemaining(prev => Math.max(0, prev - (payload.data.username === user?.username ? 1 : 0)))
+
+        // Notify if mentioned
+        if (user && payload.data.username !== user.username) {
+          const mentionRegex = new RegExp(`@${user.username}\\b`, 'i')
+          if (mentionRegex.test(payload.data.content)) {
+            showToast(`🔔 ${payload.data.username} menyebut kamu!`)
+          }
+        }
       }
     }
 
@@ -268,6 +282,53 @@ function App() {
     setPage('LOGIN')
   }
 
+  const fetchMentions = async (query: string) => {
+    if (!query && query !== '') return;
+    try {
+      const res = await fetch(getApiUrl(`users/search?q=${query}`), { credentials: 'same-origin' })
+      if (res.ok) {
+        const data = await res.json()
+        setMentionResults(data || [])
+        setMentionIndex(0)
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  const insertMention = (username: string) => {
+    const textBeforeCursor = inputValue.substring(0, mentionCursorPos)
+    const textAfterCursor = inputValue.substring(mentionCursorPos)
+    
+    const match = textBeforeCursor.match(/(?:^|\s)@(\w*)$/)
+    if (match) {
+      const startIdx = textBeforeCursor.lastIndexOf('@' + match[1])
+      const newBefore = textBeforeCursor.substring(0, startIdx) + `@${username} `
+      setInputValue(newBefore + textAfterCursor)
+    }
+    
+    setIsMentioning(false)
+    setMentionResults([])
+    document.getElementById('message-input')?.focus()
+  }
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const val = e.target.value
+    setInputValue(val)
+    
+    const cursorPos = e.target.selectionStart
+    const textBeforeCursor = val.substring(0, cursorPos)
+    const match = textBeforeCursor.match(/(?:^|\s)@(\w*)$/)
+    
+    if (match) {
+      setIsMentioning(true)
+      setMentionCursorPos(cursorPos)
+      fetchMentions(match[1])
+    } else {
+      setIsMentioning(false)
+    }
+  }
+
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault()
     const content = inputValue.trim()
@@ -284,6 +345,28 @@ function App() {
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (isMentioning && mentionResults.length > 0) {
+      if (e.key === 'ArrowUp') {
+        e.preventDefault()
+        setMentionIndex(prev => (prev > 0 ? prev - 1 : mentionResults.length - 1))
+        return
+      }
+      if (e.key === 'ArrowDown') {
+        e.preventDefault()
+        setMentionIndex(prev => (prev < mentionResults.length - 1 ? prev + 1 : 0))
+        return
+      }
+      if (e.key === 'Enter' || e.key === 'Tab') {
+        e.preventDefault()
+        insertMention(mentionResults[mentionIndex])
+        return
+      }
+      if (e.key === 'Escape') {
+        setIsMentioning(false)
+        return
+      }
+    }
+
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       handleSend(e)
@@ -496,11 +579,12 @@ function App() {
             const prevMsg = idx > 0 ? messages[idx - 1] : null
             const isContinuation = prevMsg?.username === msg.username
             const showHeader = !isContinuation
+            const isMentioned = user && msg.username !== user.username && new RegExp(`@${user.username}\\b`, 'i').test(msg.content)
 
             return (
               <div
                 key={msg.id || `msg-${idx}`}
-                className={`message ${isOwn ? 'own' : 'other'}`}
+                className={`message ${isOwn ? 'own' : 'other'} ${isMentioned ? 'mentioned-msg' : ''}`}
               >
                 {showHeader && (
                   <div className="message-header">
@@ -532,13 +616,30 @@ function App() {
 
       {/* Input */}
       <div className="message-input-area">
+        {isMentioning && mentionResults.length > 0 && (
+          <div className="mention-dropdown">
+            {mentionResults.map((u, idx) => (
+              <div 
+                key={u} 
+                className={`mention-item ${idx === mentionIndex ? 'active' : ''}`}
+                onClick={() => insertMention(u)}
+                onMouseEnter={() => setMentionIndex(idx)}
+              >
+                <div className="mention-avatar" style={{ background: getAvatarColor(u) }}>
+                  {u[0].toUpperCase()}
+                </div>
+                <span>{u}</span>
+              </div>
+            ))}
+          </div>
+        )}
         <form className="message-input-wrapper" onSubmit={handleSend}>
           <textarea
             id="message-input"
             className="message-input"
             placeholder="Ketik pesan..."
             value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
+            onChange={handleInputChange}
             onKeyDown={handleKeyDown}
             rows={1}
             autoComplete="off"
