@@ -14,19 +14,30 @@ var RDB *redis.Client
 var Ctx = context.Background()
 
 func InitRedis() {
-	host := os.Getenv("REDIS_HOST")
-	if host == "" {
-		host = "localhost"
-	}
-	port := os.Getenv("REDIS_PORT")
-	if port == "" {
-		port = "6379"
-	}
+	url := os.Getenv("REDIS_URL")
+	if url != "" {
+		opts, err := redis.ParseURL(url)
+		if err != nil {
+			log.Fatal("Failed to parse REDIS_URL:", err)
+		}
+		RDB = redis.NewClient(opts)
+	} else {
+		host := os.Getenv("REDIS_HOST")
+		if host == "" {
+			host = "localhost"
+		}
+		port := os.Getenv("REDIS_PORT")
+		if port == "" {
+			port = "6379"
+		}
+		password := os.Getenv("REDIS_PASSWORD")
 
-	RDB = redis.NewClient(&redis.Options{
-		Addr: fmt.Sprintf("%s:%s", host, port),
-		DB:   0,
-	})
+		RDB = redis.NewClient(&redis.Options{
+			Addr:     fmt.Sprintf("%s:%s", host, port),
+			Password: password,
+			DB:       0,
+		})
+	}
 
 	_, err := RDB.Ping(Ctx).Result()
 	if err != nil {
