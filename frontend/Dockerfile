@@ -10,6 +10,12 @@ RUN npm ci
 # Copy source code
 COPY . .
 
+# Accept VITE environment variables during build
+ARG VITE_API_URL
+ARG VITE_WS_URL
+ENV VITE_API_URL=$VITE_API_URL
+ENV VITE_WS_URL=$VITE_WS_URL
+
 # Build production bundle
 RUN npm run build
 
