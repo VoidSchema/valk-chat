@@ -104,7 +104,8 @@ func main() {
 		}
 
 		cache.SetSession(token, user.ID, user.Username, 24*time.Hour)
-		c.SetCookie("session_token", token, 86400, "/", "", false, true)
+		c.SetSameSite(http.SameSiteNoneMode)
+		c.SetCookie("session_token", token, 86400, "/", "", true, true)
 
 		c.JSON(http.StatusOK, gin.H{
 			"user_id":        user.ID,
@@ -144,7 +145,8 @@ func main() {
 		}
 
 		cache.SetSession(token, user.ID, user.Username, 24*time.Hour)
-		c.SetCookie("session_token", token, 86400, "/", "", false, true)
+		c.SetSameSite(http.SameSiteNoneMode)
+		c.SetCookie("session_token", token, 86400, "/", "", true, true)
 
 		// Get remaining chat quota
 		remaining, _ := middleware.GetUserChatRemaining(user.ID)
@@ -164,7 +166,8 @@ func main() {
 		if err == nil && token != "" {
 			cache.DeleteSession(token)
 		}
-		c.SetCookie("session_token", "", -1, "/", "", false, true)
+		c.SetSameSite(http.SameSiteNoneMode)
+		c.SetCookie("session_token", "", -1, "/", "", true, true)
 		c.JSON(http.StatusOK, gin.H{"message": "logged out"})
 	})
 

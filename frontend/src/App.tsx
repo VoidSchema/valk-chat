@@ -96,7 +96,7 @@ function App() {
 
   async function checkSession() {
     try {
-      const res = await fetch(getApiUrl('me'), { credentials: 'same-origin' })
+      const res = await fetch(getApiUrl('me'), { credentials: 'include' })
       if (res.ok) {
         const data: UserInfo = await res.json()
         setUser(data)
@@ -161,7 +161,7 @@ function App() {
 
   const loadMessages = useCallback(async () => {
     try {
-      const res = await fetch(getApiUrl('messages'), { credentials: 'same-origin' })
+      const res = await fetch(getApiUrl('messages'), { credentials: 'include' })
       if (res.ok) {
         const data: Message[] = await res.json()
         setMessages(data || [])
@@ -198,7 +198,7 @@ function App() {
       const res = await fetch(getApiUrl('login'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'same-origin',
+        credentials: 'include',
         body: JSON.stringify({ username: authUsername, password: authPassword }),
       })
 
@@ -245,7 +245,7 @@ function App() {
       const res = await fetch(getApiUrl('register'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'same-origin',
+        credentials: 'include',
         body: JSON.stringify({ username: authUsername, password: authPassword }),
       })
 
@@ -277,7 +277,7 @@ function App() {
     try {
       await fetch(getApiUrl('logout'), {
         method: 'POST',
-        credentials: 'same-origin',
+        credentials: 'include',
       })
     } catch { /* ignore */ }
     wsRef.current?.close()
@@ -289,7 +289,7 @@ function App() {
   const fetchMentions = async (query: string) => {
     if (!query && query !== '') return;
     try {
-      const res = await fetch(getApiUrl(`users/search?q=${query}`), { credentials: 'same-origin' })
+      const res = await fetch(getApiUrl(`users/search?q=${query}`), { credentials: 'include' })
       if (res.ok) {
         const data = await res.json()
         setMentionResults(data || [])
